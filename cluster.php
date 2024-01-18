@@ -20,10 +20,8 @@ if(!isset($_SESSION['username'])){
     header('location:index.php');
 }
 include 'configs/config.php';
-
-// get all server from nw_server table and put them in an array
 $servers = array();
-$sql = "SELECT * FROM nw_server"; // Basic SQL query
+$sql = "SELECT * FROM nw_server";
 
 $stmt = $pdo->prepare($sql);
 
@@ -33,7 +31,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $servers[] = $row;
 }
 
-$stmt = null; // Close the statement
+$stmt = null;
 
 ?>
 <!DOCTYPE html>
@@ -139,7 +137,11 @@ $stmt = null; // Close the statement
                                     <?php endif; ?>
                                 </td>
                                 <td class="align-middle">
-                                    <a href="deleteserver.php?id=<?= $server['id'] ?>" class="text-secondary font-weight-bold text-s" data-toggle="tooltip" data-original-title="Delete Server">
+                                    <a href="manageserver.php?id=<?= htmlspecialchars($server['id']) ?>" class="text-secondary font-weight-bold text-s" data-toggle="tooltip" data-original-title="Manage Server">
+                                        <i class="fas fa-cog"></i>
+                                    </a>
+                                    &nbsp; <!-- Spacer -->
+                                    <a href="deleteserver.php?id=<?= htmlspecialchars($server['id']) ?>" class="text-secondary font-weight-bold text-s" data-toggle="tooltip" data-original-title="Delete Server">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </td>
