@@ -63,5 +63,30 @@ function updateServerUsage {
 
     echo "Server usage updated successfully."
 }
-
 updateServerUsage
+function is_script_in_crontab {
+    script_path=$(realpath "$0")
+    crontab -l | grep -Fq "$script_path"
+}
+
+if ! is_script_in_crontab; then
+    read -p "Do you want to add this script to crontabs for periodic execution? (y/n): " add_cron
+
+    if [[ "$add_cron" == "y" ]]; then
+        read -p "Enter the duration for the script to run periodically (e.g., '5' for every 5 minutes, '10' for every 10 minutes, etc.): " duration
+        if ! [[ "$duration" =~ ^[0-9]+$ ]]; then
+            echo "Invalid input. Please enter a number."
+            exit 1
+        fi
+
+        script_path=$(realpath "$0")
+
+        cron_job="*/$duration * * * * $script_path"
+        (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
+        echo "Script has been added to crontab to run every $duration minutes."
+    else
+        echo "No changes made to crontab."
+    fi
+else
+    echo "This script is already scheduled in crontab."
+fi
