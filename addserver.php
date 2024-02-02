@@ -1,47 +1,53 @@
 <?php
-include 'configs/config.php'; // Include your database configuration file
+session_start();
+include 'configs/config.php'; 
 
-// Check if the form was submitted
+function logServerAddition($pdo, $username, $action, $server_id) {
+    try {
+        $stmt = $pdo->prepare("INSERT INTO nw_log_server_add_cl (username, action, server_id) VALUES (:username, :action, :server_id)");
+        
+        $stmt->bindParam(':username', $_SESSION['username']);
+        $stmt->bindParam(':action', $action);
+        $stmt->bindParam(':server_id', $server_id);
+        
+        $stmt->execute();
+    } catch (PDOException $e) {
+        error_log("Log insert failed: " . $e->getMessage());
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve the form data
     $servername = $_POST['servername'] ?? '';
     $serverip = $_POST['serverip'] ?? '';
-    $active = $_POST['serveractive'] ?? '0'; // Default to '0' if not set
-    $created = date('Y-m-d H:i:s'); // Default to current date and time if not set
+    $active = $_POST['serveractive'] ?? '0';
+    $created = date('Y-m-d H:i:s'); 
 
     // Validate input
     if (empty($servername) || empty($serverip)) {
-        // Handle the error - both server name and IP are required
         echo "Server name and IP are required.";
         exit;
     }
 
-    // Generate a random ID
-    $id = bin2hex(random_bytes(10)); // Generate a 20-character random ID
+    $id = bin2hex(random_bytes(10)); 
 
     try {
-        // Prepare the SQL statement
         $stmt = $pdo->prepare("INSERT INTO nw_server (id, servername, ip, active, creation_date) VALUES (:id, :servername, :ip, :active, :created)");
 
-        // Bind parameters
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':servername', $servername);
         $stmt->bindParam(':ip', $serverip);
         $stmt->bindParam(':active', $active);
         $stmt->bindParam(':created', $created);
 
-        // Execute the statement
         $stmt->execute();
 
-        // Redirect or inform of success
-        echo "Server added successfully.";
+        logServerAddition($pdo, $_SESSION['username'], "Server added to Cluster", $id);
+
         header('Location: cluster.php');
+        exit;
     } catch (PDOException $e) {
-        // Handle SQL errors
         echo "Error: " . $e->getMessage();
     }
 } else {
-    // Not a POST request
     echo "Invalid request.";
 }
-?>

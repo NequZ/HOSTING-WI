@@ -8,17 +8,16 @@ ________   _______   ________  ___  ___  ________
 \ \__\\ \__\ \_______\ \_____  \ \_______\\________\
 \|__| \|__|\|_______|\|___| \__\|_______|\|_______|
 \|__|
-
 Project : NequZ - WI
 Created : 16.01.2024
 Author  : NequZ
-
 Copyright (c) 2024 NequZ. All rights reserved.
 */
 
-include 'configs/config.php';
 
+include 'configs/config.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
     $username = $_POST['username'];
     $password = $_POST['password'];
 
@@ -33,18 +32,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             session_start();
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
+            logLoginAttempt($pdo, $username, 1); // 1 representing ACTION_LOGIN_SUCCESS
 
             header("Location: dashboard.php");
             exit;
         } else {
-            // Incorrect password
+            logLoginAttempt($pdo, $username, 2); // 2 representing ACTION_LOGIN_FAIL_PASSWORD
             outputErrorMessage("Incorrect password. <a href='javascript:;' class='alert-link text-white'>Try again</a> or <a href='forgot_password.php' class='alert-link text-white'>reset your password</a>.");
+
         }
     } else {
-        // No user found
+        logLoginAttempt($pdo, $username, 3); // 3 representing ACTION_LOGIN_FAIL_USERNAME
         outputErrorMessage("Username not found. <a href='javascript:;' class='alert-link text-white'>Try again</a> or <a href='forgot_password.php' class='alert-link text-white'>reset your password</a>.");
+
     }
 }
+
 
 function outputErrorMessage($message) {
     echo "<!DOCTYPE html>
@@ -80,4 +83,18 @@ function outputErrorMessage($message) {
     </html>";
     exit;
 }
+
+function logLoginAttempt($pdo, $username, $action, $status = 1) {
+    try {
+        $stmt = $pdo->prepare("INSERT INTO nw_log_login_gl; (`user`, `action`, `status`) VALUES (:user, :action, :status)");
+        $stmt->execute([
+            ':user' => $username, 
+            ':action' => $action,
+            ':status' => $status
+        ]);
+    } catch (PDOException $e) {
+        error_log("Failed to log login attempt: " . $e->getMessage());
+    }
+}
+
 ?>

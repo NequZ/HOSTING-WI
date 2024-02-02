@@ -15,8 +15,6 @@ Author  : NequZ
 
 Copyright (c) 2024 NequZ. All rights reserved.
 */
-
-
 session_start();
 
 if (!isset($_SESSION['username'])) {
@@ -26,6 +24,20 @@ if (!isset($_SESSION['username'])) {
 
 include 'configs/config.php';
 
+function logServerAction($pdo, $username, $action, $server_id) {
+    try {
+        $stmt = $pdo->prepare("INSERT INTO nw_log_server_add_cl (username, action, server_id) VALUES (:username, :action, :server_id)");
+        
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':action', $action);
+        $stmt->bindParam(':server_id', $server_id);
+        
+        $stmt->execute();
+    } catch (PDOException $e) {
+        error_log("Log insert failed: " . $e->getMessage());
+    }
+}
+
 if (isset($_GET['id'])) {
     $serverId = $_GET['id'];
 
@@ -34,14 +46,16 @@ if (isset($_GET['id'])) {
 
     $stmt->bindParam(':id', $serverId, PDO::PARAM_INT);
 
-    // Execute the query
     if ($stmt->execute()) {
+        logServerAction($pdo, $_SESSION['username'], 'Server Deleted from Cluster', $serverId);
+
         header('location:cluster.php?message=Server deleted successfully');
+        exit;
     } else {
         header('location:cluster.php?error=Unable to delete server');
+        exit;
     }
 } else {
     header('location:cluster.php?error=No server ID provided');
+    exit;
 }
-
-
